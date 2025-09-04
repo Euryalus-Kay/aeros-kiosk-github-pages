@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aeros Racing F1 Jiosk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f32411;
+            color: #FFFFFF;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        body.production {
+            cursor: none;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Arial', sans-serif;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+        
+        /* Background pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0,0,0,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        /* Main container */
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Header */
+        .header {
+            padding: 2rem;
+            text-align: center;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            animation: fadeInDown 0.8s ease-out;
+            display: block !important;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+        
+        body.pdf-viewing .header {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .logo {
+            font-size: 3rem;
+            letter-spacing: 0.2em;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-family: 'Arial', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 900;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: #FFFFFF;
+            text-shadow: 
+                2px 2px 4px rgba(0,0,0,0.9),
+                0 0 20px rgba(0,0,0,0.8),
+                0 0 40px rgba(0,0,0,0.6);
+            margin: 0;
+            margin-top: -0.5rem;
+        }
+        
+        /* Content area */
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Home state */
+        .home-content {
+            text-align: center;
+            opacity: 1;
+            transform: scale(1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .home-content.hiding {
+            opacity: 0;
+            transform: scale(0.95) rotateX(10deg);
+        }
+        
+        .tap-instruction {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            padding: 3rem 5rem;
+            border-radius: 30px;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            animation: fadeInScale 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .tap-instruction:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+        }
+        
+        .tap-instruction h2 {
+            font-size: 3.5rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+        
+        .tap-instruction p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+        
+        /* PDF state */
+        .pdf-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            background: #000000;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        
+        .pdf-content.showing {
+            display: block;
+            animation: slideUpFade 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes slideUpFade {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) scale(0.9) perspective(1000px) rotateX(-10deg);
+            }
+            70% {
+                opacity: 1;
+                transform: translateY(-15px) scale(1.02) perspective(1000px) rotateX(2deg);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) perspective(1000px) rotateX(0deg);
+            }
+        }
+        
+        /* PDF Header */
+        .pdf-header-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 3rem;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s ease 0.3s;
+        }
+        
+        .pdf-content.showing .pdf-header-bar {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .pdf-title {
+            font-size: 1.75rem;
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            font-weight: 700;
+        }
+        
+        .home-btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.25);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .home-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 150%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+            transform: skewX(-25deg);
+        }
+        
+        .home-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        .home-btn:hover::before {
+            left: 150%;
+        }
+        
+        .home-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        /* Scroll Indicator - COMPACT SIZE */
+        .scroll-indicator {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            background: rgba(0,0,0,0.9);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.9);
+        }
+        
+        .pdf-content.showing .scroll-indicator {
+            display: block !important;
+        }
+        
+        .scroll-indicator.hidden {
+            opacity: 0 !important;
+        }
+        
+        .scroll-text {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 5px rgba(0,0,0,1);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        /* PDF Frame - Enhanced scrollbar hiding */
+        .pdf-viewer-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000 !important;
+            background-color: #000000 !important;
+            padding: 5px;
+            padding-top: 77px;
+            box-sizing: border-box;
+            overflow: hidden !important;
+        }
+        
+        .pdf-frame-wrapper {
+            width: 100%;
+            height: 100%;
+            background: #000000 !important;
+            overflow: hidden !important;
+            position: relative;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .pdf-frame-wrapper::after {
+            display: none;
+        }
+        
+        .pdf-frame {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
+            border: 0 !important;
+            outline: 0 !important;
+            background: white !important;
+            overflow: auto !important;
+            display: block;
+            box-shadow: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background-color: white !important;
+            background-image: none !important;
+            transform: translateZ(0);
+            will-change: transform;
+            z-index: 2;
+            /* Enhanced scrollbar hiding for iframe */
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        
+        /* Enhanced iframe scrollbar hiding */
+        .pdf-frame::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
+        /* Force hide scrollbars on all iframe elements */
+        iframe {
+            border: 0 !important;
+            outline: none !important;
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        
+        iframe::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
+        /* Developer panel */
+        .dev-panel {
+            position: fixed;
+            top: 0;
+            left: -400px;
+            width: 400px;
+            height: 100vh;
+            background: #1a1a1a;
+            transition: left 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.3);
+        }
+        
+        .dev-panel.open {
+            left: 0;
+        }
+        
+        .dev-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 999;
+            font-size: 0.875rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .dev-toggle.production-mode {
+            display: none;
+        }
+        
+        .dev-header {
+            padding: 2rem;
+            border-bottom: 2px solid #f32411;
+        }
+        
+        .dev-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .dev-section h3 {
+            color: #f32411;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #333;
+            color: white;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #f32411;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: #d91e0c;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-id {
+            font-family: monospace;
+            color: #4CAF50;
+            font-size: 0.9rem;
+        }
+        
+        /* Status bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.8);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-bar.production-mode {
+            display: none;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+        
+        .status-dot.connected {
+            background: #4CAF50;
+        }
+        
+        /* Transition overlay */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #f32411;
+            z-index: 3000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .transition-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .transition-overlay .loading-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            animation: loadingPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes loadingPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: white;
+            border-right-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 40px rgba(255,255,255,0.3);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease-out 0.2s forwards;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 0.9;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Clean PDF viewing - adjusted to not hide header permanently */
+        body.pdf-viewing .status-bar {
+            display: none;
+        }
+        
+        body.pdf-viewing .content {
+            padding: 0;
+        }
+        
+        /* Force full-screen PDF with no gaps */
+        body.pdf-viewing {
+            overflow: hidden !important;
+        }
+        
+        body.pdf-viewing * {
+            -webkit-overflow-scrolling: touch !important;
+        }
+        
+        /* Force black on PDF container elements only */
+        .pdf-content {
+            background: #000000 !important;
+        }
+        
+        .pdf-viewer-container {
+            background: #000000 !important;
+        }
+        
+        .pdf-frame-wrapper {
+            background: #000000 !important;
+        }
+        
+        /* But keep iframe background white */
+        .pdf-frame {
+            background-color: white !important;
+            background: white !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">AEROS RACING</h1>
+            <p class="subtitle">AEROS PIT KIOSK</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Home State -->
+            <div class="home-content" id="homeContent" style="display: flex;">
+                <div class="tap-instruction">
+                    <h2>TAP YOUR CARD</h2>
+                    <p>Hold your RFID card near the reader</p>
+                </div>
+            </div>
+            
+            <!-- PDF State - Perfect Integration -->
+            <div class="pdf-content" id="pdfContent">
+                <div class="pdf-viewer-container">
+                    <div class="pdf-frame-wrapper" style="background: #000000 !important; background-color: #000000 !important;">
+                        <!-- Black frame for PDF with scrollbar clipping -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 5px; background: #000000 !important; background-color: #000000 !important; z-index: 0; overflow: hidden;">
+                            <!-- Wrapper to clip scrollbar -->
+                            <div style="position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; overflow: hidden; background: white;">
+                                <iframe 
+                                    class="pdf-frame" 
+                                    id="pdfFrame"
+                                    scrolling="no"
+                                    frameborder="0"
+                                    allowfullscreen
+                                    style="position: absolute; top: 0; left: 0; right: -20px; bottom: 0; z-index: 2; background-color: white !important; background: white !important; width: calc(100% + 20px); height: 100%; border: 0 !important; outline: 0 !important;">
+                                </iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pdf-header-bar">
+                    <h2 class="pdf-title" id="pdfTitle">Document</h2>
+                    <button class="home-btn" onclick="goHome()">
+                        <span>←</span>
+                        <span>HOME</span>
+                    </button>
+                </div>
+                <!-- Scroll Indicator - NEW -->
+                <div class="scroll-indicator" id="scrollIndicator">
+                    <div class="scroll-text">Scroll down to see more</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Developer Toggle -->
+    <button class="dev-toggle" id="devToggle" onclick="toggleDev()">☰</button>
+    
+    <!-- Developer Panel -->
+    <div class="dev-panel" id="devPanel">
+        <div class="dev-header">
+            <h2>Developer Settings</h2>
+            <button class="btn" onclick="toggleDev()">Close</button>
+        </div>
+        
+        <div class="dev-section">
+            <h3>Add Card</h3>
+            <input type="text" id="cardId" placeholder="Card ID">
+            <input type="text" id="docName" placeholder="Document Name">
+            <select id="pdfSelect">
+                <option value="">Select PDF</option>
+            </select>
+            <button class="btn" onclick="addCard()">Add Card</button>
+        </div>
+        
+        <div class="dev-section">
+            <h3>Add PDF</h3>
+            <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 1rem;">
+            <button class="btn" onclick="uploadPDF()">Upload PDF</button>
+            <div id="uploadStatus" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+        </div>
+        
+        <div class="dev-section">
+            <h3>Card Mappings</h3>
+            <div id="cardList"></div>
+        </div>
+        
+        <div class="dev-section">
+            <h3>System Mode</h3>
+            <p style="margin-bottom: 1rem; opacity: 0.7;">
+                Production mode is permanent!
+            </p>
+            <button class="btn btn-danger" onclick="switchToProduction()">
+                Switch to Production
+            </button>
+        </div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-item">
+            <span>Mode:</span>
+            <strong id="modeText">Developer</strong>
+        </div>
+        <div class="status-item">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Disconnected</span>
+        </div>
+    </div>
+    
+    <!-- Transition Overlay -->
+    <div class="transition-overlay" id="transitionOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading Document</div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let config = { mode: 'developer', cards: {} };
+        let rfidBuffer = '';
+        let resetTimer = null;
+        let scrollIndicatorTimer = null;
+        
+        // Sample data for demo
+        const sampleCards = {
+            'DEV001': { name: 'Developer Manual', pdf: 'sample1.pdf' },
+            'TEST001': { name: 'Test Document', pdf: 'sample2.pdf' },
+            'USER001': { name: 'User Guide', pdf: 'sample1.pdf' }
+        };
+        
+        // Scroll monitoring function - FIXED TIMER
+        function setupScrollMonitoring() {
+            console.log('setupScrollMonitoring called');
+            
+            // Clear any existing timer first
+            if (scrollIndicatorTimer) {
+                clearTimeout(scrollIndicatorTimer);
+                scrollIndicatorTimer = null;
+            }
+            
+            // Get scroll indicator element
+            const scrollIndicator = document.getElementById('scrollIndicator');
+            if (!scrollIndicator) {
+                console.error('Scroll indicator element not found!');
+                return;
+            }
+            
+            // Force show the indicator
+            scrollIndicator.style.display = 'block';
+            scrollIndicator.classList.remove('hidden');
+            
+            // Wait for CSS transition then set opacity
+            requestAnimationFrame(() => {
+                scrollIndicator.style.opacity = '1';
+                console.log('Scroll indicator SHOWN at', new Date().toLocaleTimeString());
+                
+                // Set timer to hide after 5 seconds
+                scrollIndicatorTimer = setTimeout(() => {
+                    scrollIndicator.style.opacity = '0';
+                    scrollIndicator.classList.add('hidden');
+                    console.log('Scroll indicator HIDDEN at', new Date().toLocaleTimeString());
+                    
+                    // Hide display after fade out
+                    setTimeout(() => {
+                        scrollIndicator.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            });
+        }
+        
+        // Initialize
+        function init() {
+            console.log('🚀 Starting Aeros Racing Jiosk...');
+            
+            // Load persistent data from localStorage
+            loadPersistentData();
+            
+            // Update UI
+            updateUI();
+            updateCardList();
+            
+            // RFID input handler
+            document.addEventListener('keypress', (e) => {
+                // Only listen on home screen
+                if (document.getElementById('pdfContent').style.display === 'block') return;
+                
+                if (e.key === 'Enter') {
+                    if (rfidBuffer) {
+                        console.log('🏷️  RFID:', rfidBuffer);
+                        handleCardScan(rfidBuffer);
+                        rfidBuffer = '';
+                    }
+                } else {
+                    rfidBuffer += e.key;
+                }
+            });
+            
+            // Load PDFs
+            loadPDFs();
+        }
+        
+        // Persistent storage functions
+        function savePersistentData() {
+            try {
+                localStorage.setItem('aerosConfig', JSON.stringify(config));
+                localStorage.setItem('aerosUploadedPDFs', JSON.stringify(window.uploadedPDFs || {}));
+                console.log('💾 Data saved to localStorage');
+            } catch (error) {
+                console.error('Failed to save data:', error);
+            }
+        }
+        
+        function loadPersistentData() {
+            try {
+                // Load config
+                const savedConfig = localStorage.getItem('aerosConfig');
+                if (savedConfig) {
+                    config = { ...config, ...JSON.parse(savedConfig) };
+                    console.log('📂 Loaded config from localStorage');
+                } else {
+                    // Load sample data if no saved config
+                    config.cards = { ...sampleCards };
+                }
+                
+                // Load uploaded PDFs
+                const savedPDFs = localStorage.getItem('aerosUploadedPDFs');
+                if (savedPDFs) {
+                    window.uploadedPDFs = JSON.parse(savedPDFs);
+                    console.log('📂 Loaded uploaded PDFs from localStorage');
+                } else {
+                    window.uploadedPDFs = {};
+                }
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                // Fallback to sample data
+                config.cards = { ...sampleCards };
+                window.uploadedPDFs = {};
+            }
+        }
+        
+        // Handle card scan
+        function handleCardScan(cardId) {
+            if (config.cards[cardId]) {
+                const card = config.cards[cardId];
+                showPDF(card.name, card.pdf);
+            } else {
+                if (config.mode === 'developer') {
+                    alert(`Unknown card: ${cardId}\nAdd it in developer settings.`);
+                }
+            }
+        }
+        
+        // UI Functions
+        function showPDF(name, file) {
+            // First, start the transition
+            const homeContent = document.getElementById('homeContent');
+            const pdfContent = document.getElementById('pdfContent');
+            const overlay = document.getElementById('transitionOverlay');
+            const scrollIndicator = document.getElementById('scrollIndicator');
+            
+            // Hide home content with animation
+            homeContent.classList.add('hiding');
+            
+            // Show loading overlay with delay for smooth transition
+            setTimeout(() => {
+                overlay.classList.add('active');
+            }, 150);
+            
+            // Prepare PDF
+            setTimeout(() => {
+                document.getElementById('pdfTitle').textContent = name;
+                
+                // Enhanced parameters for better PDF display without scrollbars
+                let pdfUrl = file; // Use the filename directly
+                
+                // Check if this is an uploaded PDF
+                if (window.uploadedPDFs && window.uploadedPDFs[file]) {
+                    pdfUrl = window.uploadedPDFs[file];
+                } else {
+                    // For local files, try to load directly
+                    pdfUrl = file;
+                }
+                
+                const iframe = document.getElementById('pdfFrame');
+                
+                // Set white background before loading
+                iframe.style.backgroundColor = 'white';
+                iframe.style.background = 'white';
+                
+                // Add a white cover on the right to hide scrollbar
+                const cover = document.createElement('div');
+                cover.style.position = 'absolute';
+                cover.style.top = '0';
+                cover.style.right = '0';
+                cover.style.bottom = '0';
+                cover.style.width = '20px';
+                cover.style.background = 'white';
+                cover.style.zIndex = '1000';
+                iframe.parentElement.appendChild(cover);
+                
+                iframe.src = pdfUrl;
+                
+                // Record load time for fallback scroll indicator behavior
+                window.pdfLoadTime = Date.now();
+                
+                // Show PDF content with animation
+                homeContent.style.display = 'none';
+                homeContent.classList.remove('hiding');
+                pdfContent.style.display = 'block';
+                
+                // Ensure black background is set everywhere for PDF view
+                const wrapper = document.querySelector('.pdf-frame-wrapper');
+                if (wrapper) {
+                    wrapper.style.background = '#000000';
+                    wrapper.style.backgroundColor = '#000000';
+                }
+                const container = document.querySelector('.pdf-viewer-container');
+                if (container) {
+                    container.style.background = '#000000';
+                    container.style.backgroundColor = '#000000';
+                }
+                
+                // Wait for iframe to start loading
+                iframe.onload = function() {
+                    try {
+                        // Try to access iframe content (may fail due to cross-origin)
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        
+                        // Inject enhanced styles to hide scrollbars
+                        const style = iframeDoc.createElement('style');
+                        style.textContent = `
+                            /* Global scrollbar hiding */
+                            *::-webkit-scrollbar {
+                                display: none !important;
+                                width: 0 !important;
+                                height: 0 !important;
+                            }
+                            * {
+                                -ms-overflow-style: none !important;
+                                scrollbar-width: none !important;
+                                border: 0px solid transparent !important;
+                                outline: 0px solid transparent !important;
+                                box-shadow: none !important;
+                            }
+                            html, body {
+                                background: white !important;
+                                background-color: white !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                overflow: auto !important;
+                                -ms-overflow-style: none !important;
+                                scrollbar-width: none !important;
+                            }
+                            html::-webkit-scrollbar,
+                            body::-webkit-scrollbar {
+                                display: none !important;
+                                width: 0 !important;
+                                height: 0 !important;
+                            }
+                            #outerContainer {
+                                background: white !important;
+                                background-color: white !important;
+                                border: none !important;
+                                -ms-overflow-style: none !important;
+                                scrollbar-width: none !important;
+                            }
+                            #outerContainer::-webkit-scrollbar {
+                                display: none !important;
+                            }
+                            #mainContainer {
+                                background: white !important;
+                                border: none !important;
+                            }
+                            #viewerContainer {
+                                -ms-overflow-style: none !important;
+                                scrollbar-width: none !important;
+                                border: none !important;
+                                background: white !important;
+                                top: 0 !important;
+                                overflow: auto !important;
+                            }
+                            #viewerContainer::-webkit-scrollbar {
+                                display: none !important;
+                                width: 0 !important;
+                                height: 0 !important;
+                            }
+                            #viewer {
+                                -ms-overflow-style: none !important;
+                                scrollbar-width: none !important;
+                                border: none !important;
+                            }
+                            #viewer::-webkit-scrollbar {
+                                display: none !important;
+                            }
+                            /* Hide all PDF.js UI */
+                            #sidebarContainer, 
+                            #toolbarContainer,
+                            #secondaryToolbar,
+                            #toolbarSidebar,
+                            #loadingBar,
+                            #errorWrapper,
+                            .toolbar,
+                            .toolbarContainer {
+                                display: none !important;
+                            }
+                            .page {
+                                margin: 8px auto !important;
+                                border: none !important;
+                                box-shadow: none !important;
+                                background: white !important;
+                            }
+                            .page canvas {
+                                border: none !important;
+                                box-shadow: none !important;
+                            }
+                            .canvasWrapper {
+                                border: none !important;
+                                box-shadow: none !important;
+                                background: white !important;
+                            }
+                            .textLayer {
+                                border: none !important;
+                            }
+                        `;
+                        iframeDoc.head.appendChild(style);
+                        
+                        // Force body styles
+                        if (iframeDoc.body) {
+                            iframeDoc.body.style.backgroundColor = 'white';
+                            iframeDoc.body.style.margin = '0';
+                            iframeDoc.body.style.padding = '0';
+                            iframeDoc.body.style.overflow = 'auto';
+                            iframeDoc.body.style.msOverflowStyle = 'none';
+                            iframeDoc.body.style.scrollbarWidth = 'none';
+                        }
+                        
+                        // Try to hide scrollbars on viewer container if accessible
+                        const viewerContainer = iframeDoc.getElementById('viewerContainer');
+                        if (viewerContainer) {
+                            viewerContainer.style.overflow = 'auto';
+                            viewerContainer.style.msOverflowStyle = 'none';
+                            viewerContainer.style.scrollbarWidth = 'none';
+                        }
+                    } catch(e) {
+                        console.log('Cannot access iframe content - cross-origin restriction');
+                    }
+                    
+                    // Hide loading overlay and show PDF with animation
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        pdfContent.classList.add('showing');
+                        document.body.classList.add('pdf-viewing');
+                        console.log('PDF content showing class added');
+                        
+                        // Setup scroll monitoring after PDF is shown
+                        setTimeout(() => {
+                            setupScrollMonitoring();
+                        }, 500);
+                    }, 200);
+                };
+                
+                // Fallback if onload doesn't fire
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    pdfContent.classList.add('showing');
+                    document.body.classList.add('pdf-viewing');
+                    console.log('PDF content showing class added (fallback)');
+                    
+                    // Setup scroll monitoring in fallback too
+                    setTimeout(() => {
+                        setupScrollMonitoring();
+                    }, 500);
+                }, 1000);
+                
+            }, 400);
+            
+            // Start reset timer
+            clearTimeout(resetTimer);
+            resetTimer = setTimeout(goHome, 30000);
+        }
+        
+        function goHome() {
+            console.log('Going home...');
+            const homeContent = document.getElementById('homeContent');
+            const pdfContent = document.getElementById('pdfContent');
+            const header = document.querySelector('.header');
+            
+            // Clear scroll timer
+            if (scrollIndicatorTimer) {
+                clearTimeout(scrollIndicatorTimer);
+                scrollIndicatorTimer = null;
+            }
+            
+            // Remove showing class to trigger exit animation
+            pdfContent.classList.remove('showing');
+            
+            // Hide scroll indicator immediately
+            const scrollIndicator = document.getElementById('scrollIndicator');
+            if (scrollIndicator) {
+                scrollIndicator.style.display = 'none';
+                scrollIndicator.classList.add('hidden');
+            }
+            
+            // Remove pdf-viewing class to show header again
+            document.body.classList.remove('pdf-viewing');
+            
+            setTimeout(() => {
+                homeContent.style.display = 'flex';
+                pdfContent.style.display = 'none';
+                document.getElementById('pdfFrame').src = '';
+                
+                // Ensure header is visible
+                if (header) {
+                    header.style.display = 'block';
+                    header.style.opacity = '1';
+                    header.style.visibility = 'visible';
+                }
+            }, 400);
+            
+            clearTimeout(resetTimer);
+        }
+        
+        function toggleDev() {
+            if (config.mode === 'production') return;
+            
+            const panel = document.getElementById('devPanel');
+            panel.classList.toggle('open');
+        }
+        
+        function updateUI() {
+            document.getElementById('modeText').textContent = 
+                config.mode.charAt(0).toUpperCase() + config.mode.slice(1);
+            
+            if (config.mode === 'production') {
+                document.body.classList.add('production');
+                document.getElementById('devToggle').classList.add('production-mode');
+                document.getElementById('statusBar').classList.add('production-mode');
+                document.getElementById('devPanel').classList.remove('open');
+            }
+            
+            updateCardList();
+        }
+        
+        function updateCardList() {
+            const list = document.getElementById('cardList');
+            list.innerHTML = '';
+            
+            Object.entries(config.cards).forEach(([cardId, card]) => {
+                const item = document.createElement('div');
+                item.className = 'card-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="card-id">${cardId}</div>
+                        <div>${card.name}</div>
+                    </div>
+                    <button onclick="removeCard('${cardId}')" style="
+                        background: #dc3545;
+                        border: none;
+                        color: white;
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 3px;
+                        cursor: pointer;
+                    ">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // Card Management
+        function addCard() {
+            const cardId = document.getElementById('cardId').value.trim();
+            const name = document.getElementById('docName').value.trim();
+            const pdf = document.getElementById('pdfSelect').value;
+            
+            if (!cardId || !name || !pdf) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            config.cards[cardId] = { name, pdf };
+            
+            document.getElementById('cardId').value = '';
+            document.getElementById('docName').value = '';
+            document.getElementById('pdfSelect').value = '';
+            
+            updateCardList();
+            savePersistentData(); // Save after adding card
+        }
+        
+        function removeCard(cardId) {
+            if (!confirm('Remove this card?')) return;
+            delete config.cards[cardId];
+            updateCardList();
+            savePersistentData(); // Save after removing card
+        }
+        
+        async function loadPDFs() {
+            // For demo, add sample PDFs
+            const select = document.getElementById('pdfSelect');
+            select.innerHTML = '<option value="">Select PDF</option>';
+            
+            const samplePDFs = ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'];
+            samplePDFs.forEach(pdf => {
+                select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+            });
+            
+            // Add uploaded PDFs
+            if (window.uploadedPDFs) {
+                Object.keys(window.uploadedPDFs).forEach(pdf => {
+                    select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+                });
+            }
+        }
+        
+        async function uploadPDF() {
+            const fileInput = document.getElementById('pdfFile');
+            const statusDiv = document.getElementById('uploadStatus');
+            
+            if (!fileInput.files[0]) {
+                statusDiv.textContent = 'Please select a PDF file';
+                statusDiv.style.color = '#dc3545';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            if (!file.name.endsWith('.pdf')) {
+                statusDiv.textContent = 'Only PDF files are allowed';
+                statusDiv.style.color = '#dc3545';
+                return;
+            }
+            
+            try {
+                statusDiv.textContent = 'Processing PDF...';
+                statusDiv.style.color = '#ffc107';
+                
+                // Create a local URL for the file
+                const fileUrl = URL.createObjectURL(file);
+                
+                // Add to PDF list
+                const select = document.getElementById('pdfSelect');
+                select.innerHTML += `<option value="${file.name}">${file.name}</option>`;
+                
+                // Store the file URL for later use
+                if (!window.uploadedPDFs) window.uploadedPDFs = {};
+                window.uploadedPDFs[file.name] = fileUrl;
+                
+                statusDiv.textContent = 'PDF ready to use!';
+                statusDiv.style.color = '#28a745';
+                fileInput.value = '';
+                
+                // Save uploaded PDFs to localStorage
+                savePersistentData();
+                
+            } catch (error) {
+                statusDiv.textContent = 'Upload failed: ' + error.message;
+                statusDiv.style.color = '#dc3545';
+            }
+        }
+        
+        function switchToProduction() {
+            if (!confirm('Switch to Production Mode?\n\nThis is PERMANENT and will:\n• Lock all settings\n• Hide developer options\n• Cannot be undone\n\nAre you sure?')) {
+                return;
+            }
+            
+            config.mode = 'production';
+            updateUI();
+            savePersistentData(); // Save mode change
+            alert('Switched to Production Mode');
+        }
+        
+        // Start
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "aeros-racing-f1-kiosk",
+  "version": "1.0.0",
+  "description": "Aeros Racing F1 Kiosk - Professional racing kiosk application",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000"
+  },
+  "keywords": [
+    "racing",
+    "kiosk",
+    "f1",
+    "pdf",
+    "rfid",
+    "aeros"
+  ],
+  "author": "Aeros Racing Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/aeros-kiosk-github-pages.git"
+  },
+  "homepage": "https://yourusername.github.io/aeros-kiosk-github-pages/"
+}
