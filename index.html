@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aeros Racing F1 Jiosk</title>
+    <title>Aeros Racing F1 Jiosk - Updated Version</title>
     <style>
         * {
             margin: 0;
@@ -780,7 +780,7 @@
         const sampleCards = {
             'DEV001': { name: 'Developer Manual', pdf: 'sample1.pdf' },
             'TEST001': { name: 'Test Document', pdf: 'sample2.pdf' },
-            'USER001': { name: 'User Guide', pdf: 'sample1.pdf' }
+            'USER001': { name: 'User Guide', pdf: 'manual.pdf' }
         };
         
         // Scroll monitoring function - FIXED TIMER
@@ -932,8 +932,8 @@
                 if (window.uploadedPDFs && window.uploadedPDFs[file]) {
                     pdfUrl = window.uploadedPDFs[file];
                 } else {
-                    // For local files, try to load directly
-                    pdfUrl = file;
+                    // For local files, try to load from pdfs folder
+                    pdfUrl = `pdfs/${file}`;
                 }
                 
                 const iframe = document.getElementById('pdfFrame');
@@ -957,6 +957,12 @@
                 
                 // Record load time for fallback scroll indicator behavior
                 window.pdfLoadTime = Date.now();
+                
+                // Handle load error - fallback to demo
+                iframe.onerror = function() {
+                    console.log('PDF not found, showing demo:', pdfUrl);
+                    iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found or not accessible</p><p style='color:#999;font-size:0.9rem;'>Try uploading a PDF through the developer panel</p><p style='color:#999;font-size:0.9rem;'>Or place PDF files in the pdfs/ folder</p></div></body></html>`;
+                };
                 
                 // Show PDF content with animation
                 homeContent.style.display = 'none';
