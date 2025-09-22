@@ -734,6 +734,17 @@
         </div>
         
         <div class="dev-section">
+            <h3>GitHub Repository (optional)</h3>
+            <input type="text" id="ghOwner" placeholder="Owner (e.g. yourusername)">
+            <input type="text" id="ghRepo" placeholder="Repo (e.g. aeros-kiosk-github-pages)">
+            <input type="text" id="ghBranch" placeholder="Branch (e.g. main or gh-pages)">
+            <input type="password" id="ghToken" placeholder="Personal Access Token (contents:write)">
+            <button class="btn" onclick="saveGithubSettings()">Save GitHub Settings</button>
+            <button class="btn btn-danger" onclick="clearGithubToken()">Clear Saved Token</button>
+            <p style="margin-top:0.5rem; font-size: 0.85rem; opacity: 0.8;">When configured, PDFs are listed from <code>pdfs/</code> in the repo and uploads will commit to the repo.</p>
+        </div>
+        
+        <div class="dev-section">
             <h3>Card Mappings</h3>
             <div id="cardList"></div>
         </div>
@@ -771,7 +782,7 @@
     
     <script>
         // State
-        let config = { mode: 'developer', cards: {} };
+        let config = { mode: 'developer', cards: {}, github: { owner: '', repo: '', branch: '', token: '' } };
         let rfidBuffer = '';
         let resetTimer = null;
         let scrollIndicatorTimer = null;
@@ -833,6 +844,7 @@
             // Update UI
             updateUI();
             updateCardList();
+            populateGithubFields();
             
             // RFID input handler
             document.addEventListener('keypress', (e) => {
@@ -926,14 +938,18 @@
                 document.getElementById('pdfTitle').textContent = name;
                 
                 // Enhanced parameters for better PDF display without scrollbars
-                let pdfUrl = file; // Use the filename directly
-                
-                // Check if this is an uploaded PDF
+                let pdfUrl = file;
                 if (window.uploadedPDFs && window.uploadedPDFs[file]) {
                     pdfUrl = window.uploadedPDFs[file];
+                } else if (config.github && config.github.owner && config.github.repo && config.github.branch) {
+                    const owner = encodeURIComponent(config.github.owner);
+                    const repo = encodeURIComponent(config.github.repo);
+                    const branch = encodeURIComponent(config.github.branch);
+                    const encodedFile = file.split('/').map(encodeURIComponent).join('/');
+                    pdfUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/pdfs/${encodedFile}`;
                 } else {
-                    // For local files, try to load from pdfs folder
-                    pdfUrl = `pdfs/${file}`;
+                    const base = location.origin + (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^\\/]*$/, ''));
+                    pdfUrl = new URL(`pdfs/${file}`, base).toString();
                 }
                 
                 const iframe = document.getElementById('pdfFrame');
@@ -1201,6 +1217,42 @@
             
             updateCardList();
         }
+
+        function populateGithubFields() {
+            try {
+                const gh = config.github || { owner: '', repo: '', branch: '', token: '' };
+                const ownerEl = document.getElementById('ghOwner');
+                const repoEl = document.getElementById('ghRepo');
+                const branchEl = document.getElementById('ghBranch');
+                const tokenEl = document.getElementById('ghToken');
+                if (ownerEl) ownerEl.value = gh.owner || '';
+                if (repoEl) repoEl.value = gh.repo || '';
+                if (branchEl) branchEl.value = gh.branch || '';
+                if (tokenEl) tokenEl.value = gh.token || '';
+            } catch (e) {
+                console.warn('Could not populate GitHub fields');
+            }
+        }
+
+        function saveGithubSettings() {
+            const owner = document.getElementById('ghOwner').value.trim();
+            const repo = document.getElementById('ghRepo').value.trim();
+            const branch = document.getElementById('ghBranch').value.trim();
+            const token = document.getElementById('ghToken').value.trim();
+            config.github = { owner, repo, branch, token };
+            savePersistentData();
+            alert('GitHub settings saved');
+            loadPDFs();
+        }
+
+        function clearGithubToken() {
+            if (!config.github) config.github = { owner: '', repo: '', branch: '', token: '' };
+            config.github.token = '';
+            const tokenEl = document.getElementById('ghToken');
+            if (tokenEl) tokenEl.value = '';
+            savePersistentData();
+            alert('Saved token cleared');
+        }
         
         function updateCardList() {
             const list = document.getElementById('cardList');
@@ -1256,19 +1308,39 @@
         }
         
         async function loadPDFs() {
-            // For demo, add sample PDFs
             const select = document.getElementById('pdfSelect');
             select.innerHTML = '<option value="">Select PDF</option>';
-            
-            const samplePDFs = ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'];
-            samplePDFs.forEach(pdf => {
-                select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+            const added = new Set();
+            if (config.github && config.github.owner && config.github.repo && config.github.branch) {
+                try {
+                    const url = `https://api.github.com/repos/${encodeURIComponent(config.github.owner)}/${encodeURIComponent(config.github.repo)}/contents/pdfs?ref=${encodeURIComponent(config.github.branch)}`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error('GitHub API error: ' + res.status);
+                    const items = await res.json();
+                    if (Array.isArray(items)) {
+                        items.filter(i => i.type === 'file' && /\\.pdf$/i.test(i.name)).forEach(i => {
+                            if (!added.has(i.name)) {
+                                select.innerHTML += `<option value="${i.name}">${i.name}</option>`;
+                                added.add(i.name);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Could not load PDFs from GitHub:', e.message);
+                }
+            }
+            ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'].forEach(pdf => {
+                if (!added.has(pdf)) {
+                    select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+                    added.add(pdf);
+                }
             });
-            
-            // Add uploaded PDFs
             if (window.uploadedPDFs) {
                 Object.keys(window.uploadedPDFs).forEach(pdf => {
-                    select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+                    if (!added.has(pdf)) {
+                        select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
+                        added.add(pdf);
+                    }
                 });
             }
         }
@@ -1294,23 +1366,43 @@
                 statusDiv.textContent = 'Processing PDF...';
                 statusDiv.style.color = '#ffc107';
                 
-                // Create a local URL for the file
-                const fileUrl = URL.createObjectURL(file);
-                
-                // Add to PDF list
-                const select = document.getElementById('pdfSelect');
-                select.innerHTML += `<option value="${file.name}">${file.name}</option>`;
-                
-                // Store the file URL for later use
-                if (!window.uploadedPDFs) window.uploadedPDFs = {};
-                window.uploadedPDFs[file.name] = fileUrl;
-                
-                statusDiv.textContent = 'PDF ready to use!';
-                statusDiv.style.color = '#28a745';
+                const hasGithub = config.github && config.github.owner && config.github.repo && config.github.branch && config.github.token;
+                if (hasGithub) {
+                    statusDiv.textContent = 'Uploading to GitHub...';
+                    const arrayBuffer = await file.arrayBuffer();
+                    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                    const apiUrl = `https://api.github.com/repos/${encodeURIComponent(config.github.owner)}/${encodeURIComponent(config.github.repo)}/contents/pdfs/${encodeURIComponent(file.name)}`;
+                    const res = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${config.github.token}`,
+                            'Accept': 'application/vnd.github+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Add ${file.name} via kiosk upload`,
+                            content: base64,
+                            branch: config.github.branch
+                        })
+                    });
+                    if (!res.ok) {
+                        const text = await res.text();
+                        throw new Error('GitHub upload failed: ' + res.status + ' ' + text);
+                    }
+                    statusDiv.textContent = 'Uploaded to GitHub!';
+                    statusDiv.style.color = '#28a745';
+                    await loadPDFs();
+                } else {
+                    const fileUrl = URL.createObjectURL(file);
+                    const select = document.getElementById('pdfSelect');
+                    select.innerHTML += `<option value="${file.name}">${file.name}</option>`;
+                    if (!window.uploadedPDFs) window.uploadedPDFs = {};
+                    window.uploadedPDFs[file.name] = fileUrl;
+                    statusDiv.textContent = 'PDF ready to use (session only)';
+                    statusDiv.style.color = '#28a745';
+                    savePersistentData();
+                }
                 fileInput.value = '';
-                
-                // Save uploaded PDFs to localStorage
-                savePersistentData();
                 
             } catch (error) {
                 statusDiv.textContent = 'Upload failed: ' + error.message;
@@ -1328,7 +1420,7 @@
             savePersistentData(); // Save mode change
             alert('Switched to Production Mode');
         }
-        
+
         // Start
         window.onload = init;
     </script>
