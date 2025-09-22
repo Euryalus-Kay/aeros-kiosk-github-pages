@@ -791,7 +791,10 @@
         const sampleCards = {
             'DEV001': { name: 'Developer Manual', pdf: 'sample1.pdf' },
             'TEST001': { name: 'Test Document', pdf: 'sample2.pdf' },
-            'USER001': { name: 'User Guide', pdf: 'manual.pdf' }
+            'USER001': { name: 'User Guide', pdf: 'manual.pdf' },
+            // Add your actual RFID numbers
+            '2831102582': { name: 'Card 2831102582', pdf: 'sample1.pdf' },
+            '2662250807': { name: 'Card 2662250807', pdf: 'sample2.pdf' }
         };
         
         // Scroll monitoring function - FIXED TIMER
@@ -907,10 +910,13 @@
         
         // Handle card scan
         function handleCardScan(cardId) {
+            console.log('🔍 Looking up card:', cardId);
             if (config.cards[cardId]) {
                 const card = config.cards[cardId];
+                console.log('✅ Found card mapping:', card);
                 showPDF(card.name, card.pdf);
             } else {
+                console.log('❌ Unknown card:', cardId);
                 if (config.mode === 'developer') {
                     alert(`Unknown card: ${cardId}\nAdd it in developer settings.`);
                 }
@@ -932,18 +938,29 @@
             }
             for (const url of candidates) {
                 try {
-                    const res = await fetch(url, { cache: 'no-store' });
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+                    
+                    const res = await fetch(url, { 
+                        cache: 'no-store',
+                        signal: controller.signal,
+                        mode: 'cors'
+                    });
+                    clearTimeout(timeoutId);
+                    
                     if (res.ok) {
                         const ct = (res.headers.get('content-type') || '').toLowerCase();
-                        if (ct.includes('application/pdf')) {
-                            console.log('Using PDF URL:', url);
+                        if (ct.includes('application/pdf') || ct.includes('application/octet-stream')) {
+                            console.log('✅ Using PDF URL:', url);
                             return url;
                         }
                     }
                 } catch (e) {
+                    console.log('❌ Failed to fetch:', url, e.message);
                     // ignore and try next candidate
                 }
             }
+            console.log('❌ No valid PDF URL found for:', file);
             return null;
         }
 
@@ -994,11 +1011,16 @@
                 // Load only after URL resolves
                 pdfUrlPromise.then((resolved) => {
                     if (resolved) {
+                        console.log('📄 Loading PDF:', resolved);
                         iframe.src = resolved;
                     } else {
+                        console.log('❌ No valid PDF URL, showing fallback');
                         // No valid URL; trigger error path directly
                         iframe.onerror && iframe.onerror();
                     }
+                }).catch((error) => {
+                    console.error('❌ PDF URL resolution failed:', error);
+                    iframe.onerror && iframe.onerror();
                 });
                 
                 // Record load time for fallback scroll indicator behavior
@@ -1006,8 +1028,8 @@
                 
                 // Load error handling: show inline demo message
                 iframe.onerror = function() {
-                    console.log('PDF not found, showing demo');
-                    iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found or not accessible</p><p style='color:#999;font-size:0.9rem;'>Ensure the file exists under pdfs/ in your site</p></div></body></html>`;
+                    console.log('❌ PDF load failed, showing fallback message');
+                    iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found or not accessible</p><p style='color:#999;font-size:0.9rem;'>Ensure the file exists under pdfs/ in your site</p><p style='color:#999;font-size:0.8rem;'>Check console for detailed error logs</p></div></body></html>`;
                 };
                 
                 // Show PDF content with animation
@@ -1334,6 +1356,16 @@
             savePersistentData(); // Save mode change
             alert('Switched to Production Mode');
         }
+
+        // Global error handler to suppress async listener errors
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && 
+                event.reason.message.includes('listener indicated an asynchronous response')) {
+                console.log('🔇 Suppressed async listener error (likely browser extension)');
+                event.preventDefault();
+                return;
+            }
+        });
 
         // Start
         window.onload = init;
