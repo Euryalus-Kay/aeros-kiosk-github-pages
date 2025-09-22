@@ -918,6 +918,35 @@
         }
         
         // UI Functions
+        async function resolvePdfUrl(file) {
+            // Prefer site path under pdfs/
+            const base = location.origin + (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^\\/]*$/, ''));
+            const primary = new URL(`pdfs/${file}?t=${Date.now()}`, base).toString();
+            let candidates = [primary];
+            if (config.github && config.github.owner && config.github.repo && config.github.branch) {
+                const owner = encodeURIComponent(config.github.owner);
+                const repo = encodeURIComponent(config.github.repo);
+                const branch = encodeURIComponent(config.github.branch);
+                const encodedFile = file.split('/').map(encodeURIComponent).join('/');
+                candidates.push(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/pdfs/${encodedFile}`);
+            }
+            for (const url of candidates) {
+                try {
+                    const res = await fetch(url, { cache: 'no-store' });
+                    if (res.ok) {
+                        const ct = (res.headers.get('content-type') || '').toLowerCase();
+                        if (ct.includes('application/pdf')) {
+                            console.log('Using PDF URL:', url);
+                            return url;
+                        }
+                    }
+                } catch (e) {
+                    // ignore and try next candidate
+                }
+            }
+            return null;
+        }
+
         function showPDF(name, file) {
             // First, start the transition
             const homeContent = document.getElementById('homeContent');
@@ -937,21 +966,12 @@
             setTimeout(() => {
                 document.getElementById('pdfTitle').textContent = name;
                 
-                // Build preferred site URL and optional raw fallback
-                let pdfUrl = file;
-                let rawUrl = null;
+                // Resolve a working PDF URL first
+                let pdfUrlPromise;
                 if (window.uploadedPDFs && window.uploadedPDFs[file]) {
-                    pdfUrl = window.uploadedPDFs[file];
+                    pdfUrlPromise = Promise.resolve(window.uploadedPDFs[file]);
                 } else {
-                    const base = location.origin + (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^\\/]*$/, ''));
-                    pdfUrl = new URL(`pdfs/${file}?t=${Date.now()}`, base).toString();
-                    if (config.github && config.github.owner && config.github.repo && config.github.branch) {
-                        const owner = encodeURIComponent(config.github.owner);
-                        const repo = encodeURIComponent(config.github.repo);
-                        const branch = encodeURIComponent(config.github.branch);
-                        const encodedFile = file.split('/').map(encodeURIComponent).join('/');
-                        rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/pdfs/${encodedFile}`;
-                    }
+                    pdfUrlPromise = resolvePdfUrl(file);
                 }
                 
                 const iframe = document.getElementById('pdfFrame');
@@ -971,20 +991,21 @@
                 cover.style.zIndex = '1000';
                 iframe.parentElement.appendChild(cover);
                 
-                // Load preferred URL first
-                iframe.src = pdfUrl;
+                // Load only after URL resolves
+                pdfUrlPromise.then((resolved) => {
+                    if (resolved) {
+                        iframe.src = resolved;
+                    } else {
+                        // No valid URL; trigger error path directly
+                        iframe.onerror && iframe.onerror();
+                    }
+                });
                 
                 // Record load time for fallback scroll indicator behavior
                 window.pdfLoadTime = Date.now();
                 
-                // Load error handling with raw fallback then demo
+                // Load error handling: show inline demo message
                 iframe.onerror = function() {
-                    if (rawUrl && iframe.src !== rawUrl) {
-                        console.log('Primary PDF failed, trying raw URL:', rawUrl);
-                        iframe.src = rawUrl;
-                        rawUrl = null; // prevent loops
-                        return;
-                    }
                     console.log('PDF not found, showing demo');
                     iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found or not accessible</p><p style='color:#999;font-size:0.9rem;'>Ensure the file exists under pdfs/ in your site</p></div></body></html>`;
                 };
