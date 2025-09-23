@@ -734,14 +734,15 @@
         </div>
         
         <div class="dev-section">
-            <h3>GitHub Repository (optional)</h3>
-            <input type="text" id="ghOwner" placeholder="Owner (e.g. yourusername)">
-            <input type="text" id="ghRepo" placeholder="Repo (e.g. aeros-kiosk-github-pages)">
-            <input type="text" id="ghBranch" placeholder="Branch (e.g. main or gh-pages)">
-            <input type="password" id="ghToken" placeholder="Personal Access Token (contents:write)">
-            <button class="btn" onclick="saveGithubSettings()">Save GitHub Settings</button>
-            <button class="btn btn-danger" onclick="clearGithubToken()">Clear Saved Token</button>
-            <p style="margin-top:0.5rem; font-size: 0.85rem; opacity: 0.8;">When configured, PDFs are listed from <code>pdfs/</code> in the repo and uploads will commit to the repo.</p>
+            <h3>GitHub Repository</h3>
+            <p style="margin-bottom: 1rem; opacity: 0.8;">
+                ✅ Configured: <strong>Euryalus-Kay/aeros-kiosk-github-pages</strong><br>
+                📁 PDFs loaded from: <code>pdfs/</code> folder<br>
+                🔄 Uploads commit to: <code>main</code> branch
+            </p>
+            <input type="password" id="ghToken" placeholder="Enter GitHub Token (ghp_...)">
+            <button class="btn" onclick="setGitHubToken()">Set Token</button>
+            <div id="tokenStatus" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
         </div>
         
         <div class="dev-section">
@@ -782,7 +783,7 @@
     
     <script>
         // State
-        let config = { mode: 'developer', cards: {}, github: { owner: '', repo: '', branch: '', token: '' } };
+        let config = { mode: 'developer', cards: {}, github: { owner: 'Euryalus-Kay', repo: 'aeros-kiosk-github-pages', branch: 'main', token: '' } };
         let rfidBuffer = '';
         let resetTimer = null;
         let scrollIndicatorTimer = null;
@@ -847,7 +848,6 @@
             // Update UI
             updateUI();
             updateCardList();
-            populateGithubFields();
             
             // RFID input handler
             document.addEventListener('keypress', (e) => {
@@ -872,7 +872,13 @@
         // Persistent storage functions
         function savePersistentData() {
             try {
-                localStorage.setItem('aerosConfig', JSON.stringify(config));
+                // Save cards, mode, and token (GitHub owner/repo/branch are hardcoded)
+                const dataToSave = {
+                    cards: config.cards,
+                    mode: config.mode,
+                    github: { token: config.github.token }
+                };
+                localStorage.setItem('aerosConfig', JSON.stringify(dataToSave));
                 localStorage.setItem('aerosUploadedPDFs', JSON.stringify(window.uploadedPDFs || {}));
                 console.log('💾 Data saved to localStorage');
             } catch (error) {
@@ -885,7 +891,11 @@
                 // Load config
                 const savedConfig = localStorage.getItem('aerosConfig');
                 if (savedConfig) {
-                    config = { ...config, ...JSON.parse(savedConfig) };
+                    const parsed = JSON.parse(savedConfig);
+                    // Keep hardcoded GitHub settings, load cards, mode, and token
+                    config.cards = parsed.cards || { ...sampleCards };
+                    config.mode = parsed.mode || 'developer';
+                    config.github.token = parsed.github?.token || '';
                     console.log('📂 Loaded config from localStorage');
                 } else {
                     // Load sample data if no saved config
@@ -1154,40 +1164,27 @@
             updateCardList();
         }
 
-        function populateGithubFields() {
-            try {
-                const gh = config.github || { owner: '', repo: '', branch: '', token: '' };
-                const ownerEl = document.getElementById('ghOwner');
-                const repoEl = document.getElementById('ghRepo');
-                const branchEl = document.getElementById('ghBranch');
-                const tokenEl = document.getElementById('ghToken');
-                if (ownerEl) ownerEl.value = gh.owner || '';
-                if (repoEl) repoEl.value = gh.repo || '';
-                if (branchEl) branchEl.value = gh.branch || '';
-                if (tokenEl) tokenEl.value = gh.token || '';
-            } catch (e) {
-                console.warn('Could not populate GitHub fields');
-            }
-        }
-
-        function saveGithubSettings() {
-            const owner = document.getElementById('ghOwner').value.trim();
-            const repo = document.getElementById('ghRepo').value.trim();
-            const branch = document.getElementById('ghBranch').value.trim();
+        function setGitHubToken() {
             const token = document.getElementById('ghToken').value.trim();
-            config.github = { owner, repo, branch, token };
+            const statusDiv = document.getElementById('tokenStatus');
+            
+            if (!token) {
+                statusDiv.textContent = 'Please enter a token';
+                statusDiv.style.color = '#dc3545';
+                return;
+            }
+            
+            if (!token.startsWith('ghp_')) {
+                statusDiv.textContent = 'Token should start with ghp_';
+                statusDiv.style.color = '#dc3545';
+                return;
+            }
+            
+            config.github.token = token;
             savePersistentData();
-            alert('GitHub settings saved');
-            loadPDFs();
-        }
-
-        function clearGithubToken() {
-            if (!config.github) config.github = { owner: '', repo: '', branch: '', token: '' };
-            config.github.token = '';
-            const tokenEl = document.getElementById('ghToken');
-            if (tokenEl) tokenEl.value = '';
-            savePersistentData();
-            alert('Saved token cleared');
+            statusDiv.textContent = '✅ Token saved! Uploads will now commit to GitHub.';
+            statusDiv.style.color = '#28a745';
+            document.getElementById('ghToken').value = '';
         }
         
         function updateCardList() {
