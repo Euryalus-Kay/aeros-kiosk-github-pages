@@ -718,10 +718,6 @@
                         <span>HOME</span>
                     </button>
                 </div>
-                <!-- Scroll Indicator -->
-                <div class="scroll-indicator" id="scrollIndicator">
-                    <div class="scroll-text">Scroll down to see more</div>
-                </div>
             </div>
         </div>
     </div>
@@ -817,45 +813,7 @@
             '2653423431': { name: 'Card 2653423431', pdf: 'sample1.pdf' }
         };
         
-        // Scroll monitoring function - FIXED TIMER
-        function setupScrollMonitoring() {
-            console.log('setupScrollMonitoring called');
-            
-            // Clear any existing timer first
-            if (scrollIndicatorTimer) {
-                clearTimeout(scrollIndicatorTimer);
-                scrollIndicatorTimer = null;
-            }
-            
-            // Get scroll indicator element
-            const scrollIndicator = document.getElementById('scrollIndicator');
-            if (!scrollIndicator) {
-                console.error('Scroll indicator element not found!');
-                return;
-            }
-            
-            // Force show the indicator
-            scrollIndicator.style.display = 'block';
-            scrollIndicator.classList.remove('hidden');
-            
-            // Wait for CSS transition then set opacity
-            requestAnimationFrame(() => {
-                scrollIndicator.style.opacity = '1';
-                console.log('Scroll indicator SHOWN at', new Date().toLocaleTimeString());
-                
-                // Set timer to hide after 5 seconds
-                scrollIndicatorTimer = setTimeout(() => {
-                    scrollIndicator.style.opacity = '0';
-                    scrollIndicator.classList.add('hidden');
-                    console.log('Scroll indicator HIDDEN at', new Date().toLocaleTimeString());
-                    
-                    // Hide display after fade out
-                    setTimeout(() => {
-                        scrollIndicator.style.display = 'none';
-                    }, 500);
-                }, 5000);
-            });
-        }
+        // Scroll monitoring removed - completely clean PDF view
         
         // Initialize
         function init() {
@@ -954,8 +912,9 @@
         function getPdfUrl(file) {
             // Simple direct URL construction for GitHub Pages with toolbar hiding
             const baseUrl = location.origin + location.pathname.replace(/[^/]*$/, '');
-            const pdfUrl = `${baseUrl}pdfs/${file}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
-            console.log('📄 PDF URL:', pdfUrl);
+            const timestamp = Date.now();
+            const pdfUrl = `${baseUrl}pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
+            console.log('📄 PDF URL with toolbar hiding:', pdfUrl);
             return pdfUrl;
         }
 
@@ -998,8 +957,9 @@
                 // Load error handling: try raw GitHub URL as fallback
                 iframe.onerror = function() {
                     console.log('❌ PDF load failed, trying raw GitHub URL');
-                    const rawUrl = `https://raw.githubusercontent.com/Euryalus-Kay/aeros-kiosk-github-pages/main/pdfs/${file}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
-                    console.log('🔄 Trying raw URL:', rawUrl);
+                    const timestamp = Date.now();
+                    const rawUrl = `https://raw.githubusercontent.com/Euryalus-Kay/aeros-kiosk-github-pages/main/pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
+                    console.log('🔄 Trying raw URL with toolbar hiding:', rawUrl);
                     iframe.src = rawUrl;
                     
                     // If raw URL also fails, show fallback
@@ -1020,9 +980,6 @@
                         overlay.classList.remove('active');
                         pdfContent.classList.add('showing');
                         document.body.classList.add('pdf-viewing');
-                        setTimeout(() => {
-                            setupScrollMonitoring();
-                        }, 500);
                     }, 200);
                 };
                 
@@ -1031,9 +988,6 @@
                     overlay.classList.remove('active');
                     pdfContent.classList.add('showing');
                     document.body.classList.add('pdf-viewing');
-                    setTimeout(() => {
-                        setupScrollMonitoring();
-                    }, 500);
                 }, 1000);
                 
             }, 400);
@@ -1049,21 +1003,8 @@
             const pdfContent = document.getElementById('pdfContent');
             const header = document.querySelector('.header');
             
-            // Clear scroll timer
-            if (scrollIndicatorTimer) {
-                clearTimeout(scrollIndicatorTimer);
-                scrollIndicatorTimer = null;
-            }
-            
             // Remove showing class to trigger exit animation
             pdfContent.classList.remove('showing');
-            
-            // Hide scroll indicator immediately
-            const scrollIndicator = document.getElementById('scrollIndicator');
-            if (scrollIndicator) {
-                scrollIndicator.style.display = 'none';
-                scrollIndicator.classList.add('hidden');
-            }
             
             // Remove pdf-viewing class to show header again
             document.body.classList.remove('pdf-viewing');
