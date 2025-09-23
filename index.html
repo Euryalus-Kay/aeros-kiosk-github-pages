@@ -734,8 +734,11 @@
                             id="pdfFrame"
                             scrolling="auto"
                             frameborder="0"
-                            allowfullscreen>
+                            allowfullscreen
+                            style="position: absolute; top: 0; left: 0; width: calc(100% + 50px); height: 100%; border: none; overflow: hidden;">
                         </iframe>
+                        <!-- Black cover to completely hide scrollbar area -->
+                        <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 50px; background: #1a1a1a; z-index: 9999; pointer-events: none;"></div>
                     </div>
                 </div>
                 <div class="pdf-header-bar">
