@@ -459,6 +459,18 @@
             display: none !important;
         }
         
+        /* White cover to hide scrollbar */
+        .scrollbar-cover {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 20px;
+            background: white;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
         /* Developer panel */
         .dev-panel {
             position: fixed;
@@ -733,6 +745,8 @@
                             frameborder="0"
                             allowfullscreen>
                         </iframe>
+                        <!-- White cover to hide scrollbar -->
+                        <div class="scrollbar-cover"></div>
                     </div>
                 </div>
                 <div class="pdf-header-bar">
