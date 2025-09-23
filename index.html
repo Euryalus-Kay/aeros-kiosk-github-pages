@@ -1117,7 +1117,9 @@
         
         async function loadPDFs() {
             const select = document.getElementById('pdfSelect');
-            select.innerHTML = '<option value="">Select PDF</option>';
+            
+            // FORCE CLEAR AND REBUILD
+            select.innerHTML = '';
             
             // ALWAYS try to load from GitHub API directly
             try {
@@ -1128,20 +1130,23 @@
                 const items = await res.json();
                 console.log('📄 GitHub API response:', items);
                 
-                // SIMPLE: Just add all PDFs directly
+                // BUILD ALL OPTIONS AT ONCE
+                let optionsHTML = '<option value="">Select PDF</option>';
                 items.forEach(item => {
                     if (item.name && item.name.toLowerCase().endsWith('.pdf')) {
-                        select.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                        optionsHTML += `<option value="${item.name}">${item.name}</option>`;
                         console.log('✅ Added PDF:', item.name);
                     }
                 });
                 
+                // SET ALL OPTIONS AT ONCE
+                select.innerHTML = optionsHTML;
+                console.log('🎯 Dropdown updated with', select.options.length, 'options');
+                
             } catch (e) {
                 console.warn('Could not load PDFs from GitHub:', e.message);
                 // Fallback PDFs
-                ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'].forEach(pdf => {
-                    select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
-                });
+                select.innerHTML = '<option value="">Select PDF</option><option value="sample1.pdf">sample1.pdf</option><option value="sample2.pdf">sample2.pdf</option><option value="manual.pdf">manual.pdf</option><option value="guide.pdf">guide.pdf</option>';
             }
         }
         
