@@ -684,6 +684,10 @@
                         <span>HOME</span>
                     </button>
                 </div>
+                <!-- Scroll Indicator -->
+                <div class="scroll-indicator" id="scrollIndicator">
+                    <div class="scroll-text">Scroll down to see more</div>
+                </div>
             </div>
         </div>
     </div>
@@ -779,7 +783,45 @@
             '2653423431': { name: 'Card 2653423431', pdf: 'sample1.pdf' }
         };
         
-        // Scroll monitoring removed - clean PDF view only
+        // Scroll monitoring function - FIXED TIMER
+        function setupScrollMonitoring() {
+            console.log('setupScrollMonitoring called');
+            
+            // Clear any existing timer first
+            if (scrollIndicatorTimer) {
+                clearTimeout(scrollIndicatorTimer);
+                scrollIndicatorTimer = null;
+            }
+            
+            // Get scroll indicator element
+            const scrollIndicator = document.getElementById('scrollIndicator');
+            if (!scrollIndicator) {
+                console.error('Scroll indicator element not found!');
+                return;
+            }
+            
+            // Force show the indicator
+            scrollIndicator.style.display = 'block';
+            scrollIndicator.classList.remove('hidden');
+            
+            // Wait for CSS transition then set opacity
+            requestAnimationFrame(() => {
+                scrollIndicator.style.opacity = '1';
+                console.log('Scroll indicator SHOWN at', new Date().toLocaleTimeString());
+                
+                // Set timer to hide after 5 seconds
+                scrollIndicatorTimer = setTimeout(() => {
+                    scrollIndicator.style.opacity = '0';
+                    scrollIndicator.classList.add('hidden');
+                    console.log('Scroll indicator HIDDEN at', new Date().toLocaleTimeString());
+                    
+                    // Hide display after fade out
+                    setTimeout(() => {
+                        scrollIndicator.style.display = 'none';
+                    }, 500);
+                }, 5000);
+            });
+        }
         
         // Initialize
         function init() {
@@ -944,6 +986,9 @@
                         overlay.classList.remove('active');
                         pdfContent.classList.add('showing');
                         document.body.classList.add('pdf-viewing');
+                        setTimeout(() => {
+                            setupScrollMonitoring();
+                        }, 500);
                     }, 200);
                 };
                 
@@ -952,6 +997,9 @@
                     overlay.classList.remove('active');
                     pdfContent.classList.add('showing');
                     document.body.classList.add('pdf-viewing');
+                    setTimeout(() => {
+                        setupScrollMonitoring();
+                    }, 500);
                 }, 1000);
                 
             }, 400);
@@ -967,8 +1015,21 @@
             const pdfContent = document.getElementById('pdfContent');
             const header = document.querySelector('.header');
             
+            // Clear scroll timer
+            if (scrollIndicatorTimer) {
+                clearTimeout(scrollIndicatorTimer);
+                scrollIndicatorTimer = null;
+            }
+            
             // Remove showing class to trigger exit animation
             pdfContent.classList.remove('showing');
+            
+            // Hide scroll indicator immediately
+            const scrollIndicator = document.getElementById('scrollIndicator');
+            if (scrollIndicator) {
+                scrollIndicator.style.display = 'none';
+                scrollIndicator.classList.add('hidden');
+            }
             
             // Remove pdf-viewing class to show header again
             document.body.classList.remove('pdf-viewing');
@@ -1128,7 +1189,17 @@
                 if (hasGithub) {
                     statusDiv.textContent = 'Uploading to GitHub...';
                     const arrayBuffer = await file.arrayBuffer();
-                    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                    
+                    // Convert to base64 without stack overflow
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    let binaryString = '';
+                    const chunkSize = 8192; // Process in chunks to avoid stack overflow
+                    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+                        const chunk = uint8Array.slice(i, i + chunkSize);
+                        binaryString += String.fromCharCode.apply(null, chunk);
+                    }
+                    const base64 = btoa(binaryString);
+                    
                     const apiUrl = `https://api.github.com/repos/${encodeURIComponent(config.github.owner)}/${encodeURIComponent(config.github.repo)}/contents/pdfs/${encodeURIComponent(file.name)}`;
                     const res = await fetch(apiUrl, {
                         method: 'PUT',
