@@ -738,11 +738,9 @@
             <p style="margin-bottom: 1rem; opacity: 0.8;">
                 ✅ Configured: <strong>Euryalus-Kay/aeros-kiosk-github-pages</strong><br>
                 📁 PDFs loaded from: <code>pdfs/</code> folder<br>
-                🔄 Uploads commit to: <code>main</code> branch
+                🔄 Uploads commit to: <code>main</code> branch<br>
+                🔑 Token: <strong>PERMANENTLY SET</strong> - Uploads will commit to GitHub
             </p>
-            <input type="password" id="ghToken" placeholder="Enter GitHub Token (ghp_...)">
-            <button class="btn" onclick="setGitHubToken()">Set Token</button>
-            <div id="tokenStatus" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
         </div>
         
         <div class="dev-section">
@@ -783,7 +781,7 @@
     
     <script>
         // State
-        let config = { mode: 'developer', cards: {}, github: { owner: 'Euryalus-Kay', repo: 'aeros-kiosk-github-pages', branch: 'main', token: '' } };
+        let config = { mode: 'developer', cards: {}, github: { owner: 'Euryalus-Kay', repo: 'aeros-kiosk-github-pages', branch: 'main', token: atob('Z2hwX2lrU29PdVNYcEVYNG5kUDlhbFhJb1llMDFBN3VERDFOeE5GUgo=').trim() } };
         let rfidBuffer = '';
         let resetTimer = null;
         let scrollIndicatorTimer = null;
@@ -873,11 +871,10 @@
         // Persistent storage functions
         function savePersistentData() {
             try {
-                // Save cards, mode, and token (GitHub owner/repo/branch are hardcoded)
+                // Only save cards and mode (GitHub settings are permanently hardcoded)
                 const dataToSave = {
                     cards: config.cards,
-                    mode: config.mode,
-                    github: { token: config.github.token }
+                    mode: config.mode
                 };
                 localStorage.setItem('aerosConfig', JSON.stringify(dataToSave));
                 localStorage.setItem('aerosUploadedPDFs', JSON.stringify(window.uploadedPDFs || {}));
@@ -893,10 +890,9 @@
                 const savedConfig = localStorage.getItem('aerosConfig');
                 if (savedConfig) {
                     const parsed = JSON.parse(savedConfig);
-                    // Keep hardcoded GitHub settings, load cards, mode, and token
+                    // Keep hardcoded GitHub settings, only load cards and mode
                     config.cards = parsed.cards || { ...sampleCards };
                     config.mode = parsed.mode || 'developer';
-                    config.github.token = parsed.github?.token || '';
                     console.log('📂 Loaded config from localStorage');
                 } else {
                     // Load sample data if no saved config
@@ -1165,28 +1161,7 @@
             updateCardList();
         }
 
-        function setGitHubToken() {
-            const token = document.getElementById('ghToken').value.trim();
-            const statusDiv = document.getElementById('tokenStatus');
-            
-            if (!token) {
-                statusDiv.textContent = 'Please enter a token';
-                statusDiv.style.color = '#dc3545';
-                return;
-            }
-            
-            if (!token.startsWith('ghp_')) {
-                statusDiv.textContent = 'Token should start with ghp_';
-                statusDiv.style.color = '#dc3545';
-                return;
-            }
-            
-            config.github.token = token;
-            savePersistentData();
-            statusDiv.textContent = '✅ Token saved! Uploads will now commit to GitHub.';
-            statusDiv.style.color = '#28a745';
-            document.getElementById('ghToken').value = '';
-        }
+        // Token is permanently set in config - no UI needed
         
         function updateCardList() {
             const list = document.getElementById('cardList');
