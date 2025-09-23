@@ -931,44 +931,12 @@
         }
         
         // UI Functions
-        async function resolvePdfUrl(file) {
-            // Prefer site path under pdfs/
-            const base = location.origin + (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^\\/]*$/, ''));
-            const primary = new URL(`pdfs/${file}?t=${Date.now()}`, base).toString();
-            let candidates = [primary];
-            if (config.github && config.github.owner && config.github.repo && config.github.branch) {
-                const owner = encodeURIComponent(config.github.owner);
-                const repo = encodeURIComponent(config.github.repo);
-                const branch = encodeURIComponent(config.github.branch);
-                const encodedFile = file.split('/').map(encodeURIComponent).join('/');
-                candidates.push(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/pdfs/${encodedFile}`);
-            }
-            for (const url of candidates) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-                    
-                    const res = await fetch(url, { 
-                        cache: 'no-store',
-                        signal: controller.signal,
-                        mode: 'cors'
-                    });
-                    clearTimeout(timeoutId);
-                    
-                    if (res.ok) {
-                        const ct = (res.headers.get('content-type') || '').toLowerCase();
-                        if (ct.includes('application/pdf') || ct.includes('application/octet-stream')) {
-                            console.log('✅ Using PDF URL:', url);
-                            return url;
-                        }
-                    }
-                } catch (e) {
-                    console.log('❌ Failed to fetch:', url, e.message);
-                    // ignore and try next candidate
-                }
-            }
-            console.log('❌ No valid PDF URL found for:', file);
-            return null;
+        function getPdfUrl(file) {
+            // Simple direct URL construction for GitHub Pages
+            const baseUrl = location.origin + location.pathname.replace(/[^/]*$/, '');
+            const pdfUrl = `${baseUrl}pdfs/${file}`;
+            console.log('📄 PDF URL:', pdfUrl);
+            return pdfUrl;
         }
 
         function showPDF(name, file) {
@@ -990,12 +958,12 @@
             setTimeout(() => {
                 document.getElementById('pdfTitle').textContent = name;
                 
-                // Resolve a working PDF URL first
-                let pdfUrlPromise;
+                // Get PDF URL directly
+                let pdfUrl;
                 if (window.uploadedPDFs && window.uploadedPDFs[file]) {
-                    pdfUrlPromise = Promise.resolve(window.uploadedPDFs[file]);
+                    pdfUrl = window.uploadedPDFs[file];
                 } else {
-                    pdfUrlPromise = resolvePdfUrl(file);
+                    pdfUrl = getPdfUrl(file);
                 }
                 
                 const iframe = document.getElementById('pdfFrame');
@@ -1015,28 +983,25 @@
                 cover.style.zIndex = '1000';
                 iframe.parentElement.appendChild(cover);
                 
-                // Load only after URL resolves
-                pdfUrlPromise.then((resolved) => {
-                    if (resolved) {
-                        console.log('📄 Loading PDF:', resolved);
-                        iframe.src = resolved;
-                    } else {
-                        console.log('❌ No valid PDF URL, showing fallback');
-                        // No valid URL; trigger error path directly
-                        iframe.onerror && iframe.onerror();
-                    }
-                }).catch((error) => {
-                    console.error('❌ PDF URL resolution failed:', error);
-                    iframe.onerror && iframe.onerror();
-                });
+                // Load PDF directly
+                console.log('📄 Loading PDF:', pdfUrl);
+                iframe.src = pdfUrl;
                 
                 // Record load time for fallback scroll indicator behavior
                 window.pdfLoadTime = Date.now();
                 
-                // Load error handling: show inline demo message
+                // Load error handling: try raw GitHub URL as fallback
                 iframe.onerror = function() {
-                    console.log('❌ PDF load failed, showing fallback message');
-                    iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found or not accessible</p><p style='color:#999;font-size:0.9rem;'>Ensure the file exists under pdfs/ in your site</p><p style='color:#999;font-size:0.8rem;'>Check console for detailed error logs</p></div></body></html>`;
+                    console.log('❌ PDF load failed, trying raw GitHub URL');
+                    const rawUrl = `https://raw.githubusercontent.com/Euryalus-Kay/aeros-kiosk-github-pages/main/pdfs/${file}`;
+                    console.log('🔄 Trying raw URL:', rawUrl);
+                    iframe.src = rawUrl;
+                    
+                    // If raw URL also fails, show fallback
+                    iframe.onerror = function() {
+                        console.log('❌ Both URLs failed, showing fallback message');
+                        iframe.src = `data:text/html,<html><body style='background:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;'><div style='text-align:center;'><h2>📄 PDF Viewer</h2><p>File: ${file}</p><p style='color:#666;'>PDF file not found</p><p style='color:#999;font-size:0.9rem;'>Check that ${file} exists in pdfs/ folder</p></div></body></html>`;
+                    };
                 };
                 
                 // Show PDF content with animation
