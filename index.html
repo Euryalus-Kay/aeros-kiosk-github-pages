@@ -857,15 +857,17 @@
         let resetTimer = null;
         let scrollIndicatorTimer = null;
         
-        // Sample data for demo
+        // PERMANENT CARD MAPPINGS - Never disappear!
         const sampleCards = {
             'DEV001': { name: 'Developer Manual', pdf: 'sample1.pdf' },
             'TEST001': { name: 'Test Document', pdf: 'sample2.pdf' },
             'USER001': { name: 'User Guide', pdf: 'manual.pdf' },
-            // Add your actual RFID numbers
+            // Your actual RFID numbers - PERMANENTLY SET
             '2831102582': { name: 'Card 2831102582', pdf: 'sample1.pdf' },
             '2662250807': { name: 'Card 2662250807', pdf: 'sample2.pdf' },
-            '2653423431': { name: 'Card 2653423431', pdf: 'sample1.pdf' }
+            '2653423431': { name: 'Card 2653423431', pdf: 'sample1.pdf' },
+            '2658357303': { name: 'Gummies', pdf: 'gummies.pdf' },
+            '2834398566': { name: 'Card 2834398566', pdf: 'GC.pdf' }
         };
         
         // Scroll monitoring removed - completely clean PDF view
@@ -876,6 +878,9 @@
             
             // Load persistent data from localStorage
             loadPersistentData();
+            
+            // ALWAYS ensure permanent card mappings are loaded
+            config.cards = { ...sampleCards, ...config.cards };
             
             // Update UI
             updateUI();
