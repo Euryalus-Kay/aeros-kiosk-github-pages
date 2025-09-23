@@ -1118,23 +1118,31 @@
             const select = document.getElementById('pdfSelect');
             select.innerHTML = '<option value="">Select PDF</option>';
             const added = new Set();
+            
+            console.log('🔍 Loading PDFs, config.github:', config.github);
+            
             if (config.github && config.github.owner && config.github.repo && config.github.branch) {
                 try {
                     const url = `https://api.github.com/repos/${encodeURIComponent(config.github.owner)}/${encodeURIComponent(config.github.repo)}/contents/pdfs?ref=${encodeURIComponent(config.github.branch)}`;
+                    console.log('📡 Fetching from:', url);
                     const res = await fetch(url);
                     if (!res.ok) throw new Error('GitHub API error: ' + res.status);
                     const items = await res.json();
+                    console.log('📄 GitHub API response:', items);
                     if (Array.isArray(items)) {
                         items.filter(i => i.type === 'file' && /\\.pdf$/i.test(i.name)).forEach(i => {
                             if (!added.has(i.name)) {
                                 select.innerHTML += `<option value="${i.name}">${i.name}</option>`;
                                 added.add(i.name);
+                                console.log('✅ Added PDF:', i.name);
                             }
                         });
                     }
                 } catch (e) {
                     console.warn('Could not load PDFs from GitHub:', e.message);
                 }
+            } else {
+                console.log('❌ GitHub config missing, using fallback PDFs');
             }
             ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'].forEach(pdf => {
                 if (!added.has(pdf)) {
