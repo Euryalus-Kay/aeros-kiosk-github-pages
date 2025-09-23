@@ -727,22 +727,22 @@
             -webkit-overflow-scrolling: touch !important;
         }
         
-        /* Force white on PDF container elements */
+        /* Force black on PDF container elements */
         .pdf-content {
-            background: white !important;
+            background: #000000 !important;
         }
         
         .pdf-viewer-container {
-            background: white !important;
+            background: #000000 !important;
         }
         
         .pdf-frame-wrapper {
-            background: white !important;
+            background: #000000 !important;
         }
         
         .pdf-frame {
-            background-color: white !important;
-            background: white !important;
+            background-color: #000000 !important;
+            background: #000000 !important;
         }
     </style>
 </head>
@@ -770,7 +770,7 @@
                     <embed 
                         id="pdfEmbed"
                         type="application/pdf"
-                        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999;">
+                        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999; background: #000000;">
                     </embed>
                 </div>
                 <div class="pdf-header-bar">
@@ -974,11 +974,11 @@
         
         // UI Functions
         function getPdfUrl(file) {
-            // Simple direct URL construction for GitHub Pages with toolbar hiding and full screen
+            // Simple direct URL construction for GitHub Pages with toolbar hiding, centering, and black background
             const baseUrl = location.origin + location.pathname.replace(/[^/]*$/, '');
             const timestamp = Date.now();
-            const pdfUrl = `${baseUrl}pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitV&zoom=150`;
-            console.log('📄 PDF URL with full screen:', pdfUrl);
+            const pdfUrl = `${baseUrl}pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH&zoom=100`;
+            console.log('📄 PDF URL with centering:', pdfUrl);
             return pdfUrl;
         }
 
