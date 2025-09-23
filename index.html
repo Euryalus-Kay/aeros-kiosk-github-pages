@@ -393,6 +393,9 @@
             scrollbar-width: none !important;
             margin: 0;
             padding: 0;
+            /* Center and maximize PDF content */
+            object-fit: contain;
+            object-position: center;
         }
         
         /* Enhanced iframe scrollbar hiding */
@@ -942,11 +945,11 @@
         
         // UI Functions
         function getPdfUrl(file) {
-            // Simple direct URL construction for GitHub Pages with toolbar hiding
+            // Simple direct URL construction for GitHub Pages with toolbar hiding and centering
             const baseUrl = location.origin + location.pathname.replace(/[^/]*$/, '');
             const timestamp = Date.now();
-            const pdfUrl = `${baseUrl}pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0`;
-            console.log('📄 PDF URL with toolbar hiding:', pdfUrl);
+            const pdfUrl = `${baseUrl}pdfs/${file}?t=${timestamp}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH&zoom=100`;
+            console.log('📄 PDF URL with centering:', pdfUrl);
             return pdfUrl;
         }
 
