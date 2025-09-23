@@ -882,8 +882,10 @@
             // Load persistent data from localStorage
             loadPersistentData();
             
-            // ALWAYS ensure permanent card mappings are loaded
-            config.cards = { ...sampleCards, ...config.cards };
+            // ALWAYS ensure permanent card mappings are loaded (permanent mappings take priority)
+            config.cards = { ...config.cards, ...sampleCards };
+            console.log('🔧 Permanent cards loaded:', Object.keys(sampleCards));
+            console.log('🔧 Final config.cards:', Object.keys(config.cards));
             
             // Update UI
             updateUI();
