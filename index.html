@@ -1118,7 +1118,6 @@
         async function loadPDFs() {
             const select = document.getElementById('pdfSelect');
             select.innerHTML = '<option value="">Select PDF</option>';
-            const added = new Set();
             
             // ALWAYS try to load from GitHub API directly
             try {
@@ -1128,34 +1127,20 @@
                 if (!res.ok) throw new Error('GitHub API error: ' + res.status);
                 const items = await res.json();
                 console.log('📄 GitHub API response:', items);
-                if (Array.isArray(items)) {
-                    console.log('🔍 Filtering PDFs from', items.length, 'items');
-                    items.forEach(item => {
-                        console.log('📄 Item:', item.name, 'type:', item.type);
-                        if (item.type === 'file' && item.name.toLowerCase().endsWith('.pdf')) {
-                            if (!added.has(item.name)) {
-                                select.innerHTML += `<option value="${item.name}">${item.name}</option>`;
-                                added.add(item.name);
-                                console.log('✅ Added PDF:', item.name);
-                            }
-                        }
-                    });
-                }
+                
+                // SIMPLE: Just add all PDFs directly
+                items.forEach(item => {
+                    if (item.name && item.name.toLowerCase().endsWith('.pdf')) {
+                        select.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                        console.log('✅ Added PDF:', item.name);
+                    }
+                });
+                
             } catch (e) {
                 console.warn('Could not load PDFs from GitHub:', e.message);
-            }
-            ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'].forEach(pdf => {
-                if (!added.has(pdf)) {
-                select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
-                    added.add(pdf);
-                }
-            });
-            if (window.uploadedPDFs) {
-                Object.keys(window.uploadedPDFs).forEach(pdf => {
-                    if (!added.has(pdf)) {
+                // Fallback PDFs
+                ['sample1.pdf', 'sample2.pdf', 'manual.pdf', 'guide.pdf'].forEach(pdf => {
                     select.innerHTML += `<option value="${pdf}">${pdf}</option>`;
-                        added.add(pdf);
-                    }
                 });
             }
         }
