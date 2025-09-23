@@ -1295,14 +1295,9 @@
         }
         
         function switchToProduction() {
-            if (!confirm('Switch to Production Mode?\n\nThis is PERMANENT and will:\n• Lock all settings\n• Hide developer options\n• Cannot be undone\n\nAre you sure?')) {
-                return;
-            }
-            
             config.mode = 'production';
             updateUI();
             savePersistentData(); // Save mode change
-            alert('Switched to Production Mode');
         }
 
         // Global error handler to suppress async listener errors
