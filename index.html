@@ -767,18 +767,11 @@
             <!-- PDF State - Integrated Design -->
             <div class="pdf-content" id="pdfContent">
                 <div class="pdf-viewer-container">
-                    <div class="pdf-frame-wrapper">
-                        <iframe 
-                            class="pdf-frame" 
-                            id="pdfFrame"
-                            scrolling="auto"
-                            frameborder="0"
-                            allowfullscreen
-                            style="position: absolute; top: 0; left: 0; width: calc(100% + 100px); height: 100%; border: none; overflow: hidden;">
-                        </iframe>
-                        <!-- Black cover to completely hide scrollbar area -->
-                        <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 100px; background: #1a1a1a; z-index: 9999; pointer-events: none;"></div>
-                    </div>
+                    <embed 
+                        id="pdfEmbed"
+                        type="application/pdf"
+                        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999;">
+                    </embed>
                 </div>
                 <div class="pdf-header-bar">
                     <h2 class="pdf-title" id="pdfTitle">Document</h2>
@@ -1016,19 +1009,19 @@
                     pdfUrl = getPdfUrl(file);
                 }
                 
-                const iframe = document.getElementById('pdfFrame');
+                const embed = document.getElementById('pdfEmbed');
                 
-                // Load PDF directly
-                console.log('📄 Loading PDF:', pdfUrl);
-                iframe.src = pdfUrl;
+                // Load PDF directly with embed
+                console.log('📄 Loading PDF with embed:', pdfUrl);
+                embed.src = pdfUrl;
                 
                 // Show PDF content with animation
                 homeContent.style.display = 'none';
                 homeContent.classList.remove('hiding');
                 pdfContent.style.display = 'block';
                 
-                // Wait for iframe to start loading
-                iframe.onload = function() {
+                // Wait for embed to start loading
+                embed.onload = function() {
                     setTimeout(() => {
                         overlay.classList.remove('active');
                         pdfContent.classList.add('showing');
@@ -1065,7 +1058,7 @@
             setTimeout(() => {
                 homeContent.style.display = 'flex';
                 pdfContent.style.display = 'none';
-                document.getElementById('pdfFrame').src = '';
+                document.getElementById('pdfEmbed').src = '';
                 
                 // Ensure header is visible
                 if (header) {
