@@ -363,20 +363,22 @@
             -webkit-overflow-scrolling: touch;
             margin: 0;
             padding: 0;
+            /* Clip the iframe to hide scrollbar */
+            clip-path: inset(0 0 0 0);
         }
         
         .pdf-frame {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
+            right: -20px;
             bottom: 0;
-            width: 100%;
+            width: calc(100% + 20px);
             height: 100%;
             border: 0 !important;
             outline: 0 !important;
             background: white !important;
-            overflow: hidden !important;
+            overflow: auto !important;
             display: block;
             box-shadow: none !important;
             -webkit-appearance: none !important;
@@ -730,7 +732,7 @@
                         <iframe 
                             class="pdf-frame" 
                             id="pdfFrame"
-                            scrolling="no"
+                            scrolling="auto"
                             frameborder="0"
                             allowfullscreen>
                         </iframe>
