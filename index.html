@@ -1129,11 +1129,15 @@
                 const items = await res.json();
                 console.log('📄 GitHub API response:', items);
                 if (Array.isArray(items)) {
-                    items.filter(i => i.type === 'file' && /\\.pdf$/i.test(i.name)).forEach(i => {
-                        if (!added.has(i.name)) {
-                            select.innerHTML += `<option value="${i.name}">${i.name}</option>`;
-                            added.add(i.name);
-                            console.log('✅ Added PDF:', i.name);
+                    console.log('🔍 Filtering PDFs from', items.length, 'items');
+                    items.forEach(item => {
+                        console.log('📄 Item:', item.name, 'type:', item.type);
+                        if (item.type === 'file' && item.name.toLowerCase().endsWith('.pdf')) {
+                            if (!added.has(item.name)) {
+                                select.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                                added.add(item.name);
+                                console.log('✅ Added PDF:', item.name);
+                            }
                         }
                     });
                 }
