@@ -883,9 +883,11 @@
             loadPersistentData();
             
             // ALWAYS ensure permanent card mappings are loaded (permanent mappings take priority)
+            console.log('🔧 Before merge - config.cards:', Object.keys(config.cards));
+            console.log('🔧 Before merge - sampleCards:', Object.keys(sampleCards));
             config.cards = { ...config.cards, ...sampleCards };
-            console.log('🔧 Permanent cards loaded:', Object.keys(sampleCards));
-            console.log('🔧 Final config.cards:', Object.keys(config.cards));
+            console.log('🔧 After merge - config.cards:', Object.keys(config.cards));
+            console.log('🔧 Checking specific card 2823882614:', config.cards['2823882614']);
             
             // Update UI
             updateUI();
