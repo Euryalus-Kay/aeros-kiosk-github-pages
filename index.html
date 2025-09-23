@@ -72,6 +72,18 @@
             pointer-events: none;
         }
         
+        body.pdf-viewing .pdf-header-bar {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        body.pdf-viewing .scroll-indicator {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -323,7 +335,7 @@
             white-space: nowrap;
         }
         
-        /* PDF Frame - Clean full page */
+        /* PDF Frame - Completely clean, no UI elements */
         .pdf-viewer-container {
             position: absolute;
             top: 0;
@@ -333,6 +345,7 @@
             background: white !important;
             background-color: white !important;
             padding: 0;
+            margin: 0;
             box-sizing: border-box;
             overflow: hidden !important;
         }
@@ -348,6 +361,8 @@
             box-shadow: none !important;
             transform: none !important;
             -webkit-overflow-scrolling: touch;
+            margin: 0;
+            padding: 0;
         }
         
         .pdf-frame {
@@ -374,6 +389,8 @@
             z-index: 2;
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
+            margin: 0;
+            padding: 0;
         }
         
         /* Enhanced iframe scrollbar hiding */
@@ -393,6 +410,23 @@
             padding: 0 !important;
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
+        }
+        
+        /* Hide PDF viewer toolbar and UI elements */
+        .pdf-frame {
+            /* Hide Adobe PDF toolbar */
+            -webkit-transform: scale(1.0) !important;
+            transform: scale(1.0) !important;
+        }
+        
+        /* Force hide any PDF viewer UI */
+        body.pdf-viewing .pdf-frame {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
         }
         
         iframe::-webkit-scrollbar {
@@ -918,9 +952,9 @@
         
         // UI Functions
         function getPdfUrl(file) {
-            // Simple direct URL construction for GitHub Pages
+            // Simple direct URL construction for GitHub Pages with toolbar hiding
             const baseUrl = location.origin + location.pathname.replace(/[^/]*$/, '');
-            const pdfUrl = `${baseUrl}pdfs/${file}`;
+            const pdfUrl = `${baseUrl}pdfs/${file}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
             console.log('📄 PDF URL:', pdfUrl);
             return pdfUrl;
         }
@@ -964,7 +998,7 @@
                 // Load error handling: try raw GitHub URL as fallback
                 iframe.onerror = function() {
                     console.log('❌ PDF load failed, trying raw GitHub URL');
-                    const rawUrl = `https://raw.githubusercontent.com/Euryalus-Kay/aeros-kiosk-github-pages/main/pdfs/${file}`;
+                    const rawUrl = `https://raw.githubusercontent.com/Euryalus-Kay/aeros-kiosk-github-pages/main/pdfs/${file}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&scrollbar=0`;
                     console.log('🔄 Trying raw URL:', rawUrl);
                     iframe.src = rawUrl;
                     
