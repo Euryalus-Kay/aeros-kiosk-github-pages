@@ -376,7 +376,7 @@
             border: 0 !important;
             outline: 0 !important;
             background: white !important;
-            overflow: auto !important;
+            overflow: hidden !important;
             display: block;
             box-shadow: none !important;
             -webkit-appearance: none !important;
@@ -459,17 +459,6 @@
             display: none !important;
         }
         
-        /* Black cover to hide scrollbar and blend with background */
-        .scrollbar-cover {
-            position: absolute;
-            top: 0;
-            right: -20px;
-            bottom: 0;
-            width: 40px;
-            background: #1a1a1a;
-            z-index: 1000;
-            pointer-events: none;
-        }
         
         /* Developer panel */
         .dev-panel {
@@ -741,12 +730,10 @@
                         <iframe 
                             class="pdf-frame" 
                             id="pdfFrame"
-                            scrolling="auto"
+                            scrolling="no"
                             frameborder="0"
                             allowfullscreen>
                         </iframe>
-                        <!-- White cover to hide scrollbar -->
-                        <div class="scrollbar-cover"></div>
                     </div>
                 </div>
                 <div class="pdf-header-bar">
