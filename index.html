@@ -959,12 +959,23 @@
         // Handle card scan
         function handleCardScan(cardId) {
             console.log('🔍 Looking up card:', cardId);
+            console.log('🔍 Card ID type:', typeof cardId);
+            console.log('🔍 Card ID length:', cardId.length);
+            console.log('🔍 Available cards:', Object.keys(config.cards));
+            
             if (config.cards[cardId]) {
                 const card = config.cards[cardId];
                 console.log('✅ Found card mapping:', card);
                 showPDF(card.name, card.pdf);
             } else {
                 console.log('❌ Unknown card:', cardId);
+                console.log('❌ Checking for similar cards...');
+                // Check if there's a similar card ID
+                for (let key in config.cards) {
+                    if (key.includes(cardId) || cardId.includes(key)) {
+                        console.log('🔍 Similar card found:', key, '→', config.cards[key]);
+                    }
+                }
                 if (config.mode === 'developer') {
                     alert(`Unknown card: ${cardId}\nAdd it in developer settings.`);
                 }
