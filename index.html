@@ -323,17 +323,16 @@
             white-space: nowrap;
         }
         
-        /* PDF Frame - Enhanced scrollbar hiding */
+        /* PDF Frame - Clean full page */
         .pdf-viewer-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #000000 !important;
-            background-color: #000000 !important;
-            padding: 5px;
-            padding-top: 77px;
+            background: white !important;
+            background-color: white !important;
+            padding: 0;
             box-sizing: border-box;
             overflow: hidden !important;
         }
@@ -341,7 +340,7 @@
         .pdf-frame-wrapper {
             width: 100%;
             height: 100%;
-            background: #000000 !important;
+            background: white !important;
             overflow: hidden !important;
             position: relative;
             border: none !important;
@@ -351,18 +350,14 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        .pdf-frame-wrapper::after {
-            display: none;
-        }
-        
         .pdf-frame {
             position: absolute;
-            top: 5px;
-            left: 5px;
-            right: 5px;
-            bottom: 5px;
-            width: calc(100% - 10px);
-            height: calc(100% - 10px);
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
             border: 0 !important;
             outline: 0 !important;
             background: white !important;
@@ -377,7 +372,6 @@
             transform: translateZ(0);
             will-change: transform;
             z-index: 2;
-            /* Enhanced scrollbar hiding for iframe */
             -ms-overflow-style: none !important;
             scrollbar-width: none !important;
         }
@@ -633,20 +627,19 @@
             -webkit-overflow-scrolling: touch !important;
         }
         
-        /* Force black on PDF container elements only */
+        /* Force white on PDF container elements */
         .pdf-content {
-            background: #000000 !important;
+            background: white !important;
         }
         
         .pdf-viewer-container {
-            background: #000000 !important;
+            background: white !important;
         }
         
         .pdf-frame-wrapper {
-            background: #000000 !important;
+            background: white !important;
         }
         
-        /* But keep iframe background white */
         .pdf-frame {
             background-color: white !important;
             background: white !important;
@@ -671,24 +664,17 @@
                 </div>
             </div>
             
-            <!-- PDF State - Perfect Integration -->
+            <!-- PDF State - Clean Full Page -->
             <div class="pdf-content" id="pdfContent">
                 <div class="pdf-viewer-container">
-                    <div class="pdf-frame-wrapper" style="background: #000000 !important; background-color: #000000 !important;">
-                        <!-- Black frame for PDF with scrollbar clipping -->
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 5px; background: #000000 !important; background-color: #000000 !important; z-index: 0; overflow: hidden;">
-                            <!-- Wrapper to clip scrollbar -->
-                            <div style="position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; overflow: hidden; background: white;">
-                                <iframe 
-                                    class="pdf-frame" 
-                                    id="pdfFrame"
-                                    scrolling="no"
-                                    frameborder="0"
-                                    allowfullscreen
-                                    style="position: absolute; top: 0; left: 0; right: -20px; bottom: 0; z-index: 2; background-color: white !important; background: white !important; width: calc(100% + 20px); height: 100%; border: 0 !important; outline: 0 !important;">
-                                </iframe>
-                            </div>
-                        </div>
+                    <div class="pdf-frame-wrapper">
+                        <iframe 
+                            class="pdf-frame" 
+                            id="pdfFrame"
+                            scrolling="auto"
+                            frameborder="0"
+                            allowfullscreen>
+                        </iframe>
                     </div>
                 </div>
                 <div class="pdf-header-bar">
@@ -697,10 +683,6 @@
                         <span>←</span>
                         <span>HOME</span>
                     </button>
-                </div>
-                <!-- Scroll Indicator - NEW -->
-                <div class="scroll-indicator" id="scrollIndicator">
-                    <div class="scroll-text">Scroll down to see more</div>
                 </div>
             </div>
         </div>
@@ -797,45 +779,7 @@
             '2653423431': { name: 'Card 2653423431', pdf: 'sample1.pdf' }
         };
         
-        // Scroll monitoring function - FIXED TIMER
-        function setupScrollMonitoring() {
-            console.log('setupScrollMonitoring called');
-            
-            // Clear any existing timer first
-            if (scrollIndicatorTimer) {
-                clearTimeout(scrollIndicatorTimer);
-                scrollIndicatorTimer = null;
-            }
-            
-            // Get scroll indicator element
-            const scrollIndicator = document.getElementById('scrollIndicator');
-            if (!scrollIndicator) {
-                console.error('Scroll indicator element not found!');
-                return;
-            }
-            
-            // Force show the indicator
-            scrollIndicator.style.display = 'block';
-            scrollIndicator.classList.remove('hidden');
-            
-            // Wait for CSS transition then set opacity
-            requestAnimationFrame(() => {
-                scrollIndicator.style.opacity = '1';
-                console.log('Scroll indicator SHOWN at', new Date().toLocaleTimeString());
-                
-                // Set timer to hide after 5 seconds
-                scrollIndicatorTimer = setTimeout(() => {
-                    scrollIndicator.style.opacity = '0';
-                    scrollIndicator.classList.add('hidden');
-                    console.log('Scroll indicator HIDDEN at', new Date().toLocaleTimeString());
-                    
-                    // Hide display after fade out
-                    setTimeout(() => {
-                        scrollIndicator.style.display = 'none';
-                    }, 500);
-                }, 5000);
-            });
-        }
+        // Scroll monitoring removed - clean PDF view only
         
         // Initialize
         function init() {
@@ -968,21 +912,6 @@
                 
                 const iframe = document.getElementById('pdfFrame');
                 
-                // Set white background before loading
-                iframe.style.backgroundColor = 'white';
-                iframe.style.background = 'white';
-                
-                // Add a white cover on the right to hide scrollbar
-                const cover = document.createElement('div');
-                cover.style.position = 'absolute';
-                cover.style.top = '0';
-                cover.style.right = '0';
-                cover.style.bottom = '0';
-                cover.style.width = '20px';
-                cover.style.background = 'white';
-                cover.style.zIndex = '1000';
-                iframe.parentElement.appendChild(cover);
-                
                 // Load PDF directly
                 console.log('📄 Loading PDF:', pdfUrl);
                 iframe.src = pdfUrl;
@@ -1009,41 +938,12 @@
                 homeContent.classList.remove('hiding');
                 pdfContent.style.display = 'block';
                 
-                // Ensure black background is set everywhere for PDF view
-                const wrapper = document.querySelector('.pdf-frame-wrapper');
-                if (wrapper) {
-                    wrapper.style.background = '#000000';
-                    wrapper.style.backgroundColor = '#000000';
-                }
-                const container = document.querySelector('.pdf-viewer-container');
-                if (container) {
-                    container.style.background = '#000000';
-                    container.style.backgroundColor = '#000000';
-                }
-                
                 // Wait for iframe to start loading
                 iframe.onload = function() {
-                    try {
-                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                        const style = iframeDoc.createElement('style');
-                        style.textContent = `
-                            *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-                            * { -ms-overflow-style: none !important; scrollbar-width: none !important; border: 0px solid transparent !important; outline: 0px solid transparent !important; box-shadow: none !important; }
-                            html, body { background: white !important; margin: 0 !important; padding: 0 !important; overflow: auto !important; -ms-overflow-style: none !important; scrollbar-width: none !important; }
-                            html::-webkit-scrollbar, body::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-                        `;
-                        iframeDoc.head.appendChild(style);
-                    } catch(e) {
-                        console.log('Cannot access iframe content - cross-origin restriction');
-                    }
-                    
                     setTimeout(() => {
                         overlay.classList.remove('active');
                         pdfContent.classList.add('showing');
                         document.body.classList.add('pdf-viewing');
-                        setTimeout(() => {
-                            setupScrollMonitoring();
-                        }, 500);
                     }, 200);
                 };
                 
@@ -1052,9 +952,6 @@
                     overlay.classList.remove('active');
                     pdfContent.classList.add('showing');
                     document.body.classList.add('pdf-viewing');
-                    setTimeout(() => {
-                        setupScrollMonitoring();
-                    }, 500);
                 }, 1000);
                 
             }, 400);
@@ -1070,21 +967,8 @@
             const pdfContent = document.getElementById('pdfContent');
             const header = document.querySelector('.header');
             
-            // Clear scroll timer
-            if (scrollIndicatorTimer) {
-                clearTimeout(scrollIndicatorTimer);
-                scrollIndicatorTimer = null;
-            }
-            
             // Remove showing class to trigger exit animation
             pdfContent.classList.remove('showing');
-            
-            // Hide scroll indicator immediately
-            const scrollIndicator = document.getElementById('scrollIndicator');
-            if (scrollIndicator) {
-                scrollIndicator.style.display = 'none';
-                scrollIndicator.classList.add('hidden');
-            }
             
             // Remove pdf-viewing class to show header again
             document.body.classList.remove('pdf-viewing');
