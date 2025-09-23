@@ -764,22 +764,13 @@
                 </div>
             </div>
             
-            <!-- PDF State - Integrated Design -->
-            <div class="pdf-content" id="pdfContent">
-                <div class="pdf-viewer-container">
-                    <embed 
-                        id="pdfEmbed"
-                        type="application/pdf"
-                        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: 9999; background: #000000;">
-                    </embed>
-                </div>
-                <div class="pdf-header-bar">
-                    <h2 class="pdf-title" id="pdfTitle">Document</h2>
-                    <button class="home-btn" onclick="goHome()">
-                        <span>←</span>
-                        <span>HOME</span>
-                    </button>
-                </div>
+            <!-- PDF State - AGGRESSIVE FULL SCREEN -->
+            <div class="pdf-content" id="pdfContent" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000000; z-index: 99999;">
+                <embed 
+                    id="pdfEmbed"
+                    type="application/pdf"
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90vw; height: 90vh; border: none; background: #000000;">
+                </embed>
             </div>
         </div>
     </div>
@@ -1015,25 +1006,50 @@
                 console.log('📄 Loading PDF with embed:', pdfUrl);
                 embed.src = pdfUrl;
                 
-                // Show PDF content with animation
+                // Show PDF content with animation - AGGRESSIVE
                 homeContent.style.display = 'none';
                 homeContent.classList.remove('hiding');
                 pdfContent.style.display = 'block';
+                pdfContent.style.position = 'fixed';
+                pdfContent.style.top = '0';
+                pdfContent.style.left = '0';
+                pdfContent.style.width = '100vw';
+                pdfContent.style.height = '100vh';
+                pdfContent.style.background = '#000000';
+                pdfContent.style.zIndex = '99999';
                 
-                // Wait for embed to start loading
+                // Wait for embed to start loading - AGGRESSIVE
                 embed.onload = function() {
                     setTimeout(() => {
                         overlay.classList.remove('active');
                         pdfContent.classList.add('showing');
                         document.body.classList.add('pdf-viewing');
+                        // FORCE CENTER THE EMBED
+                        embed.style.position = 'absolute';
+                        embed.style.top = '50%';
+                        embed.style.left = '50%';
+                        embed.style.transform = 'translate(-50%, -50%)';
+                        embed.style.width = '90vw';
+                        embed.style.height = '90vh';
+                        embed.style.border = 'none';
+                        embed.style.background = '#000000';
                     }, 200);
                 };
                 
-                // Fallback if onload doesn't fire
+                // Fallback if onload doesn't fire - AGGRESSIVE
                 setTimeout(() => {
                     overlay.classList.remove('active');
                     pdfContent.classList.add('showing');
                     document.body.classList.add('pdf-viewing');
+                    // FORCE CENTER THE EMBED
+                    embed.style.position = 'absolute';
+                    embed.style.top = '50%';
+                    embed.style.left = '50%';
+                    embed.style.transform = 'translate(-50%, -50%)';
+                    embed.style.width = '90vw';
+                    embed.style.height = '90vh';
+                    embed.style.border = 'none';
+                    embed.style.background = '#000000';
                 }, 1000);
                 
             }, 400);
